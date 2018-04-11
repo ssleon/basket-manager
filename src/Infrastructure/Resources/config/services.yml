@@ -1,0 +1,214 @@
+parameters:
+    basket_manager.config.player_file: 'player.dat'
+    basket_manager.config.tactic_file: 'tactic.dat'
+
+    basket_manager.default_tactic:
+        - { name: 'Defensa 1-3-1', positions: [base, escolta, escolta, ala-pivot, pivot] }
+        - { name: 'Defensa Zonal 2-3', positions: [base, base, alero, pivot, ala-pivot] }
+        - { name: 'Ataque 2-2-1', positions: [base, alero, escolta, pivot, ala-pivot] }
+
+
+services:
+    # UTILS
+    basket_manager.util.assert:
+        class: App\Infrastructure\Util\Assert
+
+    basket_manager.serializer.native:
+        class: App\Application\Serializer\NativeSerializer
+
+    basket_manager.serializer.json:
+            class: App\Application\Serializer\JsonSerializer
+
+    # SERVICE BUS
+    basket_manager.application.service_bus:
+        public: true
+        class: App\Application\Bus\ServiceBus
+        calls:
+            - method: addHandler
+              arguments: ['App\Application\Service\Player\Request\CreatePlayerRequest', '@basket_manager.use_case.create_player']
+            - method: addHandler
+              arguments: ['App\Application\Service\Player\Request\RemovePlayerRequest', '@basket_manager.use_case.remove_player']
+            - method: addHandler
+              arguments: ['App\Application\Service\Player\Request\ListPlayerRequest', '@basket_manager.use_case.list_player']
+            - method: addHandler
+              arguments: ['App\Application\Service\Tactic\Request\CreateTacticRequest', '@basket_manager.use_case.create_tactic']
+            - method: addHandler
+              arguments: ['App\Application\Service\Tactic\Request\RemoveTacticRequest', '@basket_manager.use_case.remove_tactic']
+            - method: addHandler
+              arguments: ['App\Application\Service\Tactic\Request\ListTacticRequest', '@basket_manager.use_case.list_tactic']
+            - method: addHandler
+              arguments: ['App\Application\Service\Tactic\Request\CalculateAlignmentRequest', '@basket_manager.use_case.calculate_alignment']
+
+    # USE CASES
+    # Player
+    basket_manager.use_case.create_player:
+        class: App\Application\Service\Player\CreatePlayerUseCase
+        arguments:
+            - '@basket_manager.repository.player_file'
+            - '@basket_manager.event_sourcing.transactional_event_store'
+
+    basket_manager.use_case.remove_player:
+        class: App\Application\Service\Player\RemovePlayerUseCase
+        arguments:
+            - '@basket_manager.repository.player_file'
+
+    basket_manager.use_case.list_player:
+        class: App\Application\Service\Player\ListPlayerUseCase
+        arguments:
+            - '@basket_manager.repository.player_file'
+
+    # Tactic
+    basket_manager.use_case.create_tactic:
+        class: App\Application\Service\Tactic\CreateTacticUseCase
+        arguments:
+            - '@basket_manager.repository.tactic_file'
+            - '@basket_manager.repository.player_file'
+
+    basket_manager.use_case.remove_tactic:
+        class: App\Application\Service\Tactic\RemoveTacticUseCase
+        arguments:
+            - '@basket_manager.repository.tactic_file'
+            - '@basket_manager.repository.player_file'
+
+    basket_manager.use_case.list_tactic:
+        class: App\Application\Service\Tactic\ListTacticUseCase
+        arguments:
+            - '@basket_manager.repository.tactic_file'
+            - '@basket_manager.repository.player_file'
+
+    basket_manager.use_case.calculate_alignment:
+        class: App\Application\Service\Tactic\CalculateAlignmentUseCase
+        arguments:
+            - '@basket_manager.repository.tactic_file'
+            - '@basket_manager.repository.player_file'
+
+    # REPOSITORIES
+    basket_manager.repository.player_file:
+        class: App\Infrastructure\Model\Repository\PlayerFileRepository
+        arguments:
+            - '@basket_manager.event_sourcing.memory_event_store'
+            - '@basket_manager.serializer.native'
+            - '@basket_manager.adapter.player_file'
+
+    basket_manager.repository.tactic_file:
+        class: App\Infrastructure\Model\Repository\TacticFileRepository
+        arguments:
+            - '@basket_manager.event_sourcing.memory_event_store'
+            - '@basket_manager.serializer.native'
+            - '@basket_manager.adapter.tactic_file'
+
+    # ADAPTERS
+    basket_manager.adapter.player_file:
+        class: App\Infrastructure\Adapter\FileAdapter
+        arguments:
+            - '%kernel.project_dir%/src/Infrastructure/Resources/files/%basket_manager.config.player_file%'
+
+    basket_manager.adapter.tactic_file:
+        class: App\Infrastructure\Adapter\FileAdapter
+        arguments:
+            - '%kernel.project_dir%/src/Infrastructure/Resources/files/%basket_manager.config.tactic_file%'
+
+    # COMMANDS
+    # Player
+    basket_manager.command.create_player:
+        class: App\Infrastructure\Command\CreatePlayerCommand
+        arguments:
+            - '@basket_manager.util.assert'
+            - '@basket_manager.application.service_bus'
+            - '%basket_manager.default_tactic%'
+        tags:
+            - { name: 'console.command' }
+
+    basket_manager.command.remove_player:
+        class: App\Infrastructure\Command\RemovePlayerCommand
+        arguments:
+            - '@basket_manager.util.assert'
+            - '@basket_manager.application.service_bus'
+            - '%basket_manager.default_tactic%'
+        tags:
+            - { name: 'console.command' }
+
+    basket_manager.command.list_player:
+        class: App\Infrastructure\Command\ListPlayerCommand
+        arguments:
+            - '@basket_manager.util.assert'
+            - '@basket_manager.application.service_bus'
+            - '%basket_manager.default_tactic%'
+        tags:
+            - { name: 'console.command' }
+
+    # Tactic
+    basket_manager.command.create_tactic:
+        class: App\Infrastructure\Command\CreateTacticCommand
+        arguments:
+            - '@basket_manager.util.assert'
+            - '@basket_manager.application.service_bus'
+            - '%basket_manager.default_tactic%'
+        tags:
+            - { name: 'console.command' }
+
+    basket_manager.command.remove_tactic:
+        class: App\Infrastructure\Command\RemoveTacticCommand
+        arguments:
+            - '@basket_manager.util.assert'
+            - '@basket_manager.application.service_bus'
+            - '%basket_manager.default_tactic%'
+        tags:
+            - { name: 'console.command' }
+
+    basket_manager.command.list_tactic:
+        class: App\Infrastructure\Command\ListTacticCommand
+        arguments:
+            - '@basket_manager.util.assert'
+            - '@basket_manager.application.service_bus'
+            - '%basket_manager.default_tactic%'
+        tags:
+            - { name: 'console.command' }
+
+    basket_manager.command.calculate_alignment:
+        class: App\Infrastructure\Command\CalculateAlignmentCommand
+        arguments:
+            - '@basket_manager.util.assert'
+            - '@basket_manager.application.service_bus'
+            - '%basket_manager.default_tactic%'
+        tags:
+            - { name: 'console.command' }
+
+    # EVENT SOURCING
+    basket_manager.event_sourcing.action_emitter:
+        class: Prooph\Common\Event\ProophActionEventEmitter
+        arguments: ~
+
+    basket_manager.event_sourcing.stream_iterator:
+        class: ArrayIterator
+
+    basket_manager.event_sourcing.stream_name:
+        class: Prooph\EventStore\StreamName
+        arguments:
+            - event_stream
+
+    basket_manager.event_sourcing.stream:
+        class: Prooph\EventStore\Stream
+        arguments:
+            - '@basket_manager.event_sourcing.stream_name'
+            - '@basket_manager.event_sourcing.stream_iterator'
+
+    basket_manager.event_sourcing.memory_event_store:
+        class: Prooph\EventStore\InMemoryEventStore
+        calls:
+            - method: create
+              arguments: ['@basket_manager.event_sourcing.stream']
+
+    basket_manager.event_sourcing.transactional_event_store:
+        class: Prooph\EventStore\TransactionalActionEventEmitterEventStore
+        arguments:
+            - '@basket_manager.event_sourcing.memory_event_store'
+            - '@basket_manager.event_sourcing.action_emitter'
+
+    basket_manager.event_sourcing.event_bus:
+        class: Prooph\ServiceBus\EventBus
+        arguments: ~
+
+    basket_manager.event_sourcing.event_router:
+        class: Prooph\ServiceBus\Plugin\Router\EventRouter
+        arguments: ~

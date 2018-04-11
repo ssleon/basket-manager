@@ -1,4 +1,25 @@
 {
+    "beberlei/assert": {
+        "version": "v2.9.4"
+    },
+    "marc-mabe/php-enum": {
+        "version": "v3.0.0"
+    },
+    "paragonie/random_compat": {
+        "version": "v2.0.12"
+    },
+    "prooph/common": {
+        "version": "v4.2.2"
+    },
+    "prooph/event-sourcing": {
+        "version": "v5.3.0"
+    },
+    "prooph/event-store": {
+        "version": "v7.3.3"
+    },
+    "prooph/service-bus": {
+        "version": "v6.2.2"
+    },
     "psr/cache": {
         "version": "1.0.1"
     },
@@ -10,6 +31,9 @@
     },
     "psr/simple-cache": {
         "version": "1.0.1"
+    },
+    "ramsey/uuid": {
+        "version": "3.7.3"
     },
     "symfony/cache": {
         "version": "v4.0.8"
